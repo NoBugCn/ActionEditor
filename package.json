@@ -1,0 +1,21 @@
+{
+  "name": "com.nobug.nbc.action_editor",
+  "version": "1.0.0",
+  "displayName": "NBC.ActionEditor",
+  "description": "NBC Action Timeline Editor.",
+  "keywords": [
+    "NBC",
+    "Nobug Client Framework",
+	"Skill Editor",
+	"Action Editor"
+  ],
+  "documentationUrl": "https://nobug.cn/book/414447506088261",
+  "changelogUrl": "https://nobug.cn/book/414447506088261",
+  "author": {
+    "name": "NoBug",
+    "url": "https://nobug.cn/"
+  },
+  "type": "library",
+  "dependencies": {
+  }
+}

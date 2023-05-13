@@ -1,0 +1,19 @@
+{
+    "name": "NBC.ActionEditor.Editor",
+    "rootNamespace": "",
+    "references": [
+        "GUID:ca88c8b4cf2e9f849ab4c6addf96bf05",
+        "GUID:d9939a25acfaf443abc5343bd8406823"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
