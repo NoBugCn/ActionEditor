@@ -12,13 +12,13 @@ namespace NBC.ActionEditor
             return directable.EndTime - directable.StartTime;
         }
 
-        public static float ToLocalTime(this ActionClip directable, float time)
+        public static float ToLocalTime(this DirectableAsset directable, float time)
         {
             return Mathf.Clamp(time - directable.StartTime, 0, directable.GetLength());
         }
 
 
-        public static float ToLocalTimeUnclamped(this ActionClip directable, float time)
+        public static float ToLocalTimeUnclamped(this DirectableAsset directable, float time)
         {
             return time - directable.StartTime;
         }

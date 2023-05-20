@@ -7,9 +7,9 @@
 
     public abstract class PreviewBase
     {
-        public ActionClip directable;
+        public DirectableAsset directable;
 
-        public void SetTarget(ActionClip t)
+        public void SetTarget(DirectableAsset t)
         {
             directable = t;
         }
