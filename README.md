@@ -28,6 +28,9 @@ Clone源码到项目中或通过package安装编辑器后，即可开始使用�
 # 文档
 操作手册文档：[点击查看](https://nobug.cn/book/414447506088261)
 
+# 交流Q群
+567604178
+
 # 演示项目
 - 基础功能演示项目：https://github.com/NoBugCn/ActionEditorExample
 - 2D回合制项目演示：等待补充
