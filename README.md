@@ -17,7 +17,7 @@
 不熟悉从url安装package的请看[install from giturl](https://docs.unity3d.com/Manual/upm-ui-giturl.html)
 
 # 功能预览视频
-等待补充
+功能预览：https://www.bilibili.com/video/BV1tM4y1q7xg/
 
 # 快速上手
 Clone源码到项目中或通过package安装编辑器后，即可开始使用。
