@@ -12,7 +12,7 @@ namespace NBC.ActionEditor
     public static class Prefs
     {
         public static readonly string CONFIG_PATH =
-            $"{Application.dataPath}/../ProjectSettings/WhootActionSequencer.txt";
+            $"{Application.dataPath}/../ProjectSettings/NBCActionEditor.txt";
 
         [Serializable]
         public enum TimeStepMode
