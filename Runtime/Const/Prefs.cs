@@ -12,7 +12,7 @@ namespace NBC.ActionEditor
     public static class Prefs
     {
         public static readonly string CONFIG_PATH =
-            $"{Application.dataPath}/../ProjectSettings/NBCActionEditor.txt";
+            $"{Application.dataPath}/../ProjectSettings/WhootActionSequencer.txt";
 
         [Serializable]
         public enum TimeStepMode
@@ -76,8 +76,7 @@ namespace NBC.ActionEditor
                 }
             }
         }
-
-
+        
         public static int autoSaveSeconds
         {
             get => data.AutoSaveSeconds;
@@ -105,7 +104,7 @@ namespace NBC.ActionEditor
         }
 
 
-        public static bool magnetSnapping
+        public static bool MagnetSnapping
         {
             get => data.MagnetSnapping;
             set
@@ -139,13 +138,13 @@ namespace NBC.ActionEditor
                 if (data.TimeStepMode != value)
                 {
                     data.TimeStepMode = value;
-                    frameRate = value == TimeStepMode.Frames ? 30 : 10;
+                    FrameRate = value == TimeStepMode.Frames ? 30 : 10;
                     Save();
                 }
             }
         }
 
-        public static int frameRate
+        public static int FrameRate
         {
             get => data.FrameRate;
             set
@@ -153,13 +152,13 @@ namespace NBC.ActionEditor
                 if (data.FrameRate != value)
                 {
                     data.FrameRate = value;
-                    snapInterval = 1f / value;
+                    SnapInterval = 1f / value;
                     Save();
                 }
             }
         }
 
-        public static float snapInterval
+        public static float SnapInterval
         {
             get => Mathf.Max(data.SnapInterval, 0.001f);
             set
@@ -185,7 +184,7 @@ namespace NBC.ActionEditor
         {
             AssetTypes.Clear();
             AssetNames.Clear();
-            var types = ReflectionTools.GetImplementationsOf(typeof(Asset));
+            var types = ReflectionTools.GetImplementationsOf(typeof(DirectorAsset));
             foreach (var t in types)
             {
                 var typeName = t.GetCustomAttributes(typeof(NameAttribute), false).FirstOrDefault() is NameAttribute nameAtt ? nameAtt.name : t.Name.SplitCamelCase();

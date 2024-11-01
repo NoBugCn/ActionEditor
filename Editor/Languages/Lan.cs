@@ -119,6 +119,7 @@ namespace NBC.ActionEditor
         public static string Disable = "禁用";
         public static string Locked = "锁定";
         public static string Save = "保存";
+        public static string Rename = "重命名";
 
         //**********  Header *********
         public static string HeaderLastSaveTime = "最后保存时间：{0}";
@@ -135,6 +136,8 @@ namespace NBC.ActionEditor
         public static string PlayTips = "点击播放";
         public static string StopTips = "点击停止播放";
         public static string StepBackwardTips = "跳转上一帧";
+
+        public static string FirstFrame = "跳转到开始处";
         
 
         //**********  Group Menu *********
@@ -146,6 +149,7 @@ namespace NBC.ActionEditor
         public static string GroupReplica = "复制组";
         public static string GroupDelete = "删除组";
         public static string GroupDeleteTips = "确定删除组吗?";
+        
 
         //**********  Track Menu *********
         public static string TrackDisable = "禁用轨道";

@@ -1,7 +1,7 @@
 ﻿# NBC.ActionEdtior
 行为时间轴编辑器
 
-能用于项目技能、Buff等时间轴表现编辑
+能用于项目技能、Buff、剧情等时间轴表现编辑
 
 # 功能特点
 - 理论上适用于`所有类型项目`的技能Buff，战斗镜头，场景效果等等
@@ -24,15 +24,11 @@ Clone源码到项目中或通过package安装编辑器后，即可开始使用�
 点击菜单`NBC/Action Editor/Open Action Editor`打开编辑窗口。
 这时编辑器均为空内容。需要自行编辑填充自己需要内容。操作方法可以查看文档
 
+## 【必看】功能示例
+https://github.com/NoBugCn/ActionEditorExample
 
 # 文档
 操作手册文档：[点击查看](https://nobug.cn/book/414447506088261)
 
 # 交流Q群
 567604178
-
-# 演示项目
-- 基础功能演示项目：https://github.com/NoBugCn/ActionEditorExample
-- 2D回合制项目演示：等待补充
-- 3D回合制项目演示：等待补充
-- ARPG项目验收：等待补充

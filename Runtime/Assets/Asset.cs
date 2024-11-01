@@ -1,19 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using UnityEditor;
+using System.Linq;
+using FullSerializer;
 using UnityEngine;
 
 namespace NBC.ActionEditor
 {
     [Serializable]
-    public abstract partial class Asset : DirectableAsset, IDirector
+    public abstract class DirectorAsset : IDirector
     {
-        public List<Group> groups = new List<Group>();
+        [HideInInspector] public List<Group> groups = new();
         [SerializeField] private float length = 5f;
-        [SerializeField] private float viewTimeMin = 0f;
+        [SerializeField] private float viewTimeMin;
         [SerializeField] private float viewTimeMax = 5f;
 
-        [HideInInspector, NonSerialized] Track[] m_CacheOutputTracks;
+        [SerializeField] private float rangeMin;
+        [SerializeField] private float rangeMax = 5f;
+
+        public DirectorAsset()
+        {
+            Init();
+        }
+
+
+        [fsIgnore] public List<IDirectable> directables { get; private set; }
 
         public float Length
         {
@@ -37,52 +47,155 @@ namespace NBC.ActionEditor
         }
 
 
-        public float MaxTime => Mathf.Max(ViewTimeMax, Length);
         public float ViewTime => ViewTimeMax - ViewTimeMin;
 
-        public List<DirectableAsset> directables { get; private set; }
-
-        public T AddGroup<T>() where T : Group, new()
+        public float RangeMin
         {
-            var newGroup = CreateInstance<T>();
-            newGroup.Name = "New Group";
-            newGroup.Parent = this;
-            groups.Add(newGroup);
-            CreateUtilities.SaveAssetIntoObject(newGroup, this);
-            DirectorUtility.selectedObject = newGroup;
+            get => rangeMin;
+            set
+            {
+                rangeMin = value;
+                if (rangeMin < 0) rangeMin = 0;
+            }
+        }
 
-            return newGroup;
+        public float RangeMax
+        {
+            get => rangeMax;
+            set
+            {
+                rangeMax = value;
+                if (rangeMax < length) rangeMax = length;
+            }
+        }
+
+
+        public void UpdateMaxTime()
+        {
+            var t = 0f;
+            foreach (var group in groups)
+            {
+                if (!group.IsActive) continue;
+                foreach (var track in group.Tracks)
+                {
+                    if (!track.IsActive) continue;
+                    foreach (var clip in track.Clips)
+                        if (clip.EndTime > t)
+                            t = clip.EndTime;
+                }
+            }
+
+            Length = t;
         }
 
         public void DeleteGroup(Group group)
         {
             groups.Remove(group);
+            Validate();
         }
 
-        public Group PasteGroup(Group group)
+        public void Validate()
         {
-            var newGroup = Instantiate(group);
+            directables = new List<IDirectable>();
+            foreach (IDirectable group in groups.AsEnumerable().Reverse())
+            {
+                directables.Add(group);
+                try
+                {
+                    group.Validate(this, null);
+                }
+                catch (Exception e)
+                {
+                    Debug.LogException(e);
+                }
+
+                foreach (var track in group.Children.Reverse())
+                {
+                    directables.Add(track);
+                    try
+                    {
+                        track.Validate(this, group);
+                    }
+                    catch (Exception e)
+                    {
+                        Debug.LogException(e);
+                    }
+
+                    foreach (var clip in track.Children)
+                    {
+                        directables.Add(clip);
+                        try
+                        {
+                            clip.Validate(this, track);
+                        }
+                        catch (Exception e)
+                        {
+                            Debug.LogException(e);
+                        }
+                    }
+                }
+            }
+
+            if (directables != null)
+                foreach (var d in directables)
+                    d.OnAfterDeserialize();
+
+            UpdateMaxTime();
+        }
+
+        public Group AddGroup(Type type)
+        {
+            if (!typeof(Group).IsAssignableFrom(type)) return null;
+            var newGroup = Activator.CreateInstance(type) as Group;
             if (newGroup != null)
             {
-                newGroup.Parent = this;
+                newGroup.Name = "New Group";
                 groups.Add(newGroup);
-                CreateUtilities.SaveAssetIntoObject(newGroup, this);
-                newGroup.Tracks.Clear();
-                foreach (var track in group.Tracks)
-                {
-                    newGroup.PasteTrack(track);
-                }
+                Validate();
             }
 
             return newGroup;
         }
 
-        public override void SaveToAssets()
+        public T AddGroup<T>(string name = "") where T : Group, new()
         {
-#if UNITY_EDITOR
-            EditorUtility.SetDirty(this);
-            AssetDatabase.SaveAssets();
-#endif
+            var newGroup = new T();
+            if (string.IsNullOrEmpty(name))
+            {
+                name = newGroup.GetType().Name;
+            }
+
+            newGroup.Name = name;
+            groups.Add(newGroup);
+            Validate();
+            return newGroup;
+        }
+
+
+        public void Init()
+        {
+            Validate();
+        }
+
+        public void OnBeforeSerialize()
+        {
+            if (directables != null)
+                foreach (var d in directables)
+                    d.OnBeforeSerialize();
+
+            // groupStr = FullSerializerExtensions.Serialize(typeof(List<Group>), groups);
+        }
+
+        public void OnAfterDeserialize()
+        {
+            // if (!string.IsNullOrEmpty(groupStr))
+            // {
+            //     var obj = FullSerializerExtensions.Deserialize(typeof(List<Group>), groupStr);
+            //     if (obj is List<Group> list)
+            //     {
+            //         groups = list;
+            //     }
+            // }
         }
     }
 }

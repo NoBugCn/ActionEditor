@@ -1,166 +1,197 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FullSerializer;
 using UnityEngine;
 
 namespace NBC.ActionEditor
 {
     [Serializable]
     [Attachable(typeof(Group))]
-    public abstract class Track : DirectableAsset
+    public abstract class Track : IDirectable
     {
-        [SerializeField] private List<ActionClip> actionClips = new List<ActionClip>();
+        [SerializeField] private List<Clip> actionClips = new();
 
+        [SerializeField] [HideInInspector] private string name;
         [SerializeField] [HideInInspector] private bool active = true;
-        [SerializeField] [HideInInspector] private bool isLocked = false;
-
+        [SerializeField] [HideInInspector] private bool isLocked;
         [SerializeField] private Color color = Color.white;
-
 
         public Color Color => color.a > 0.1f ? color : Color.white;
 
+
+        public virtual string info => string.Empty;
+
+        public List<Clip> Clips
+        {
+            get => actionClips;
+            set => actionClips = value;
+        }
+
+
+        public virtual void OnBeforeSerialize()
+        {
+        }
+
+        public virtual void OnAfterDeserialize()
+        {
+        }
+
+        [fsIgnore] public IDirector Root => Parent?.Root;
+        [fsIgnore] public IDirectable Parent { get; private set; }
+
+        [fsIgnore] public Group Group => Parent as Group;
+        
         public string Name
         {
             get => name;
             set => name = value;
         }
 
+        IEnumerable<IDirectable> IDirectable.Children => Clips;
 
-        public virtual string info => string.Empty;
+        public GameObject Actor => Parent?.Actor;
 
-        public virtual Group Parent
+        public virtual bool IsCollapsed
         {
-            get => (Group)_parent;
-            set => _parent = value;
+            get => Parent != null && Parent.IsCollapsed;
+            set { }
         }
 
-        public override bool IsCollapsed => Parent != null && Parent.IsCollapsed;
-
-        public override bool IsActive
+        public virtual bool IsActive
         {
-            get => Parent != null && (Parent.IsActive && active);
+            get => Parent != null && Parent.IsActive && active;
             set
             {
                 if (active != value)
                 {
                     active = value;
+                    if (Root != null) Root.Validate();
                 }
             }
         }
 
-        public override bool IsLocked
+        public virtual bool IsLocked
         {
             get => Parent != null && (Parent.IsLocked || isLocked);
             set => isLocked = value;
         }
 
 
-        public List<ActionClip> Clips
+        public int StartTimeInt => 0;
+        public int EndTimeInt => 0;
+
+        public virtual float StartTime
         {
-            get => actionClips;
-            set => actionClips = value;
+            get => Parent?.StartTime ?? 0;
+            set { }
         }
 
-        public override float StartTime => 0;
 
-
-        public override float EndTime => Parent != null ? Parent.EndTime : 0;
-
-        public override bool CanCrossBlend => false;
-
-
-        public virtual float ShowHeight => 30f;
-
-
-        #region 增删
-
-#if UNITY_EDITOR
-        public T AddAction<T>(float time) where T : ActionClip
+        public virtual float EndTime
         {
-            return (T)AddAction(typeof(T), time);
+            get => Parent?.EndTime ?? 0;
+            set { }
         }
 
-        public ActionClip AddAction(Type type, float time)
+        public virtual float BlendIn
+        {
+            get => 0f;
+            set { }
+        }
+
+
+        public virtual float BlendOut
+        {
+            get => 0f;
+            set { }
+        }
+
+        public bool CanCrossBlend => false;
+
+        public bool Initialize()
+        {
+            return true;
+        }
+
+        public void Validate(IDirector root, IDirectable parent)
+        {
+            // Debug.Log($"设置轨道的父节点==={parent}");
+            Parent = parent;
+            OnAfterValidate();
+        }
+
+        protected virtual void OnCreate()
+        {
+        }
+
+        protected virtual void OnAfterValidate()
+        {
+        }
+
+
+        public void PostCreate(IDirectable parent)
+        {
+            Parent = parent;
+            OnCreate();
+        }
+
+
+        public T AddClip<T>(float time) where T : Clip
+        {
+            return (T)AddClip(typeof(T), time);
+        }
+
+        public Clip AddClip(Type type, float time)
         {
             var catAtt =
                 type.GetCustomAttributes(typeof(CategoryAttribute), true).FirstOrDefault() as CategoryAttribute;
-            if (catAtt != null && Clips.Count == 0)
-            {
-                Name = catAtt.category + " Track";
-            }
+            if (catAtt != null && Clips.Count == 0) Name = catAtt.category + " Track";
 
-            var newAction = CreateInstance(type) as ActionClip;
+            var newAction = Activator.CreateInstance(type) as Clip;
 
-            CreateUtilities.SaveAssetIntoObject(newAction, this);
-            DirectorUtility.selectedObject = newAction;
+            Debug.Log($"type={type} newAction={newAction}");
 
             if (newAction != null)
             {
-                newAction.Parent = this;
+                // if (!newAction.CanAdd(this)) return null;
+
                 newAction.StartTime = time;
+                newAction.Name = type.Name;
                 Clips.Add(newAction);
+                newAction.PostCreate(this);
 
                 var nextAction = Clips.FirstOrDefault(a => a.StartTime > newAction.StartTime);
-                if (nextAction != null)
-                {
-                    newAction.EndTime = Mathf.Min(newAction.EndTime, nextAction.StartTime);
-                }
+                if (nextAction != null) newAction.EndTime = Mathf.Min(newAction.EndTime, nextAction.StartTime);
+
+                Root.Validate();
+                // DirectorUtility.selectedObject = newAction;
             }
 
             return newAction;
         }
 
-        public void DeleteAction(ActionClip action)
+        public Clip AddClip(Clip clip)
         {
-            Clips.Remove(action);
-            if (ReferenceEquals(DirectorUtility.selectedObject, action))
+            if (clip != null && clip.CanValidTime(this, clip.StartTime, clip.EndTime))
             {
-                DirectorUtility.selectedObject = null;
-            }
-        }
-
-        public ActionClip PasteClip(ActionClip clip, float time = 0)
-        {
-            var newClip = Instantiate(clip);
-            if (newClip != null)
-            {
-                if (time > 0)
+                // if (!clip.CanAdd(this)) return null;
+                if (clip.Parent != null && clip.Parent is Track track)
                 {
-                    newClip.StartTime = time;
-                    var nextClip = Clips.FirstOrDefault(a => a.StartTime > newClip.StartTime);
-                    if (nextClip != null && newClip.EndTime > nextClip.StartTime)
-                    {
-                        newClip.EndTime = nextClip.StartTime;
-                    }
+                    track.DeleteAction(clip);
                 }
 
-                newClip.Parent = this;
-                Clips.Add(newClip);
-                CreateUtilities.SaveAssetIntoObject(newClip, this);
+                Clips.Add(clip);
+                Root.Validate();
             }
 
-            return newClip;
-        }
-#endif
-
-        #endregion
-        
-
-        internal bool IsCompilable()
-        {
-            return true;
+            return clip;
         }
 
-
-        bool m_CacheSorted;
-
-        public void SortClips()
+        public void DeleteAction(Clip action)
         {
-            if (!m_CacheSorted)
-            {
-                Clips.Sort((clip1, clip2) => clip1.StartTime.CompareTo(clip2.StartTime));
-                m_CacheSorted = true;
-            }
+            Clips.Remove(action);
+            Root.Validate();
         }
     }
 }

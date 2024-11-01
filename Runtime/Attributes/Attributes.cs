@@ -95,18 +95,37 @@ namespace NBC.ActionEditor
     [AttributeUsage(AttributeTargets.Class)]
     public class CustomInspectors : Attribute
     {
-        public Type _inspectedType;
+        public Type InspectedType;
         public bool _editorForChildClasses;
 
         public CustomInspectors(Type inspectedType)
         {
-            _inspectedType = inspectedType;
+            InspectedType = inspectedType;
         }
 
         public CustomInspectors(Type inspectedType, bool editorForChildClasses)
         {
-            _inspectedType = inspectedType;
+            InspectedType = inspectedType;
             _editorForChildClasses = editorForChildClasses;
+        }
+    }
+
+    /// <summary>
+    /// 自定义检视面板
+    /// </summary>
+    [AttributeUsage(AttributeTargets.Class)]
+    public class CustomHeader : Attribute
+    {
+        public Type InspectedType;
+
+        public CustomHeader(Type inspectedType)
+        {
+            InspectedType = inspectedType;
+        }
+
+        public CustomHeader(Type inspectedType, bool editorForChildClasses)
+        {
+            InspectedType = inspectedType;
         }
     }
 
@@ -161,9 +180,9 @@ namespace NBC.ActionEditor
     {
         public readonly string iconPath;
         public readonly Type fromType;
-        public readonly Texture texture;
+        public readonly Texture2D texture;
 
-        public ShowIconAttribute(Texture texture)
+        public ShowIconAttribute(Texture2D texture)
         {
             this.texture = texture;
         }

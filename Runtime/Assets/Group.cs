@@ -1,33 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using FullSerializer;
 using UnityEngine;
 
 namespace NBC.ActionEditor
 {
+    [Name("Default Group")]
     [Serializable]
-    public class Group : DirectableAsset
+    public class Group : IDirectable
     {
-        [SerializeField, HideInInspector] private List<Track> tracks = new List<Track>();
-        [SerializeField, HideInInspector] private bool isCollapsed = false;
-        [SerializeField, HideInInspector] private bool active = true;
-        [SerializeField, HideInInspector] private bool isLocked = false;
+        [SerializeField] [HideInInspector] private string name;
+        [SerializeField] private List<Track> tracks = new();
+        [SerializeField] [HideInInspector] private bool isCollapsed;
+        [SerializeField] [HideInInspector] private bool active = true;
+        [SerializeField] [HideInInspector] private bool isLocked;
 
-
-        public virtual Asset Parent
-        {
-            get => (Asset)_parent;
-            set => _parent = value;
-        }
-
-        public override float StartTime => 0;
-        public override float EndTime => Parent.Length;
-
-        public string Name
-        {
-            get => name;
-            set => name = value;
-        }
+        public int ActorId;
 
         public List<Track> Tracks
         {
@@ -35,32 +24,105 @@ namespace NBC.ActionEditor
             set => tracks = value;
         }
 
-        public override bool IsActive
+        [fsIgnore] public IDirector Root { get; private set; }
+        IDirectable IDirectable.Parent => null;
+
+        IEnumerable<IDirectable> IDirectable.Children => Tracks;
+        private GameObject _actor;
+
+        [HideInInspector]
+        public GameObject Actor
+        {
+            get { return _actor; }
+            set
+            {
+                _actor = value;
+                // var key = _actor.GetComponent<ObjectKey>();
+                // if ((key == null))
+                // {
+                //     _actor.AddComponent<ObjectKey>();
+                //     ActorId = _actor.GetInstanceID();
+                // }
+                // else
+                // {
+                //     ActorId = key.ObjectId;
+                // }
+            }
+        }
+
+        public int StartTimeInt => 0;
+        public int EndTimeInt => 0;
+
+        float IDirectable.StartTime => 0;
+
+        float IDirectable.EndTime => Root.Length;
+
+        public float BlendIn
+        {
+            get => 0;
+            set { }
+        }
+
+        public float BlendOut
+        {
+            get => 0;
+            set { }
+        }
+
+        // float IDirectable.BlendIn => 0f;
+        //
+        // float IDirectable.BlendOut => 0f;
+
+        bool IDirectable.CanCrossBlend => false;
+
+        public string Name
+        {
+            get => name;
+            set => name = value;
+        }
+
+        public bool IsActive
         {
             get => active;
             set
             {
-                if (active != value)
-                {
-                    active = value;
-                }
+                if (active == value) return;
+                active = value;
+                if (Root != null) Root?.Validate();
             }
         }
 
-        public override bool IsCollapsed
+        public bool IsCollapsed
         {
             get => isCollapsed;
             set => isCollapsed = value;
         }
 
-        public override bool IsLocked
+        public bool IsLocked
         {
             get => isLocked;
             set => isLocked = value;
         }
 
 
-        #region 增删
+        public void Validate(IDirector _root, IDirectable _parent)
+        {
+            Root = _root;
+        }
+
+        public bool Initialize()
+        {
+            return true;
+        }
+
+        public virtual void OnBeforeSerialize()
+        {
+        }
+
+        public virtual void OnAfterDeserialize()
+        {
+        }
+
 
         public bool CanAddTrack(Track track)
         {
@@ -69,22 +131,14 @@ namespace NBC.ActionEditor
 
         public bool CanAddTrackOfType(Type type)
         {
-            if (type == null || !type.IsSubclassOf(typeof(Track)) || type.IsAbstract)
-            {
-                return false;
-            }
+            if (type == null || !type.IsSubclassOf(typeof(Track)) || type.IsAbstract) return false;
 
             if (type.IsDefined(typeof(UniqueAttribute), true) &&
                 Tracks.FirstOrDefault(t => t.GetType() == type) != null)
-            {
                 return false;
-            }
 
             var attachAtt = type.RTGetAttribute<AttachableAttribute>(true);
-            if (attachAtt == null || attachAtt.Types == null || attachAtt.Types.All(t => t != this.GetType()))
-            {
-                return false;
-            }
+            if (attachAtt == null || attachAtt.Types == null || attachAtt.Types.All(t => t != GetType())) return false;
 
             return true;
         }
@@ -96,15 +150,15 @@ namespace NBC.ActionEditor
 
         public Track AddTrack(Type type, string _name = null)
         {
-            var newTrack = CreateInstance(type);
+            var newTrack = Activator.CreateInstance(type);
             if (newTrack is Track track)
             {
+                // if (!track.CanAdd(this)) return null;
                 track.Name = type.Name;
-                track.Parent = this;
                 Tracks.Add(track);
 
-                CreateUtilities.SaveAssetIntoObject(track, this);
-                DirectorUtility.selectedObject = track;
+                Debug.Log("tracks.count=" + Tracks.Count);
+                Root?.Validate();
 
                 return track;
             }
@@ -112,45 +166,43 @@ namespace NBC.ActionEditor
             return null;
         }
 
+        public int InsertTrack<T>(T track, int index) where T : Track
+        {
+            if (tracks.Contains(track))
+            {
+                DeleteTrack(track);
+            }
+
+            if (index >= tracks.Count)
+            {
+                index = tracks.Count;
+                tracks.Add(track);
+            }
+            else
+            {
+                if (index < 0) index = 0;
+                tracks.Insert(index, track);
+            }
+
+            Root?.Validate();
+            return index;
+        }
+
         public void DeleteTrack(Track track)
         {
             // Undo.RegisterCompleteObjectUndo(this, "Delete Track");
             Tracks.Remove(track);
-            if (ReferenceEquals(DirectorUtility.selectedObject, track))
-            {
-                DirectorUtility.selectedObject = null;
-            }
+            // if (ReferenceEquals(DirectorUtility.selectedObject, track))
+            // {
+            //     DirectorUtility.selectedObject = null;
+            // }
 
-            // Undo.DestroyObjectImmediate(track);
-            // EditorUtility.SetDirty(this);
-            // root?.Validate();
-            // root?.SaveToAssets();
+            Root?.Validate();
         }
 
-
-        public Track PasteTrack(Track track)
+        public int GetTrackIndex(Track track)
         {
-            if (!CanAddTrack(track))
-            {
-                return null;
-            }
-
-            var newTrack = Instantiate(track);
-            if (newTrack != null)
-            {
-                newTrack.Parent = this;
-                Tracks.Add(newTrack);
-                CreateUtilities.SaveAssetIntoObject(newTrack, this);
-                newTrack.Clips.Clear();
-                foreach (var clip in track.Clips)
-                {
-                    newTrack.PasteClip(clip);
-                }
-            }
-
-            return newTrack;
+            return tracks.FindIndex(t => t == track);
         }
-
-        #endregion
     }
 }
