@@ -21,10 +21,10 @@ namespace NBC.ActionEditor
 
         void InitializeAll()
         {
-            // Lan.Load();
+            Lan.Load();
             Styles.Load();
             Prefs.InitializeAssetTypes();
-            // App.OnInitialize?.Invoke();
+            App.OnInitialize?.Invoke();
             //停止播放
             if (App.AssetData != null)
             {
@@ -62,6 +62,8 @@ namespace NBC.ActionEditor
             App.Window = null;
             EditorSceneManager.sceneSaving -= OnWillSaveScene;
             EditorApplication.update -= OnEditorUpdate;
+            
+            App.OnDisable?.Invoke();
         }
 
         void OnEditorUpdate()

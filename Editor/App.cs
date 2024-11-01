@@ -15,6 +15,10 @@ namespace NBC.ActionEditor
     {
         private static TextAsset _textAsset;
 
+        public static CallbackFunction OnInitialize;
+        public static CallbackFunction OnDisable;
+        public static OpenAssetFunction OnOpenAsset;
+        
         public static Asset AssetData { get; private set; } = null;
 
         public static TextAsset TextAsset
@@ -35,6 +39,7 @@ namespace NBC.ActionEditor
                     {
                         AssetData = asset;
                         asset.Init();
+                        OnOpenAsset?.Invoke(AssetData);
                         App.Refresh();
                     }
                 }
