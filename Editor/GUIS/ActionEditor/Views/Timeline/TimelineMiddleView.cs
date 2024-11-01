@@ -9,7 +9,7 @@ namespace NBC.ActionEditor
     public class TimelineMiddleView : ViewBase, IPointerDragHandler, IDragBeginHandler, IDragEndHandler,
         IPointerDownHandler, IPointerUpHandler
     {
-        public DirectorAsset asset => App.AssetData;
+        public Asset asset => App.AssetData;
 
 
         #region Static

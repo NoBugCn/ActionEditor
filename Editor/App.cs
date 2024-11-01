@@ -9,16 +9,13 @@ namespace NBC.ActionEditor
 {
     public delegate void CallbackFunction();
 
-    public delegate void OpenAssetFunction(DirectorAsset asset);
+    public delegate void OpenAssetFunction(Asset asset);
 
     public static class App
     {
         private static TextAsset _textAsset;
 
-        public static CallbackFunction OnPlay;
-        public static CallbackFunction OnStop;
-
-        public static DirectorAsset AssetData { get; private set; } = null;
+        public static Asset AssetData { get; private set; } = null;
 
         public static TextAsset TextAsset
         {
@@ -33,8 +30,8 @@ namespace NBC.ActionEditor
                 }
                 else
                 {
-                    var obj = Json.Deserialize(typeof(DirectorAsset), _textAsset.text);
-                    if (obj is DirectorAsset asset)
+                    var obj = Json.Deserialize(typeof(Asset), _textAsset.text);
+                    if (obj is Asset asset)
                     {
                         AssetData = asset;
                         asset.Init();
@@ -85,6 +82,7 @@ namespace NBC.ActionEditor
         public static void OnUpdate()
         {
             TryAutoSave();
+            PlayerUpdate();
         }
 
         #region AutoSave
@@ -181,7 +179,7 @@ namespace NBC.ActionEditor
 
                 Selection.activeObject = CurrentInspectorPreviewAsset;
                 EditorUtility.SetDirty(CurrentInspectorPreviewAsset);
-                
+
                 // DirectorUtility.selectedObject = FistSelect;
             }
 
@@ -226,100 +224,90 @@ namespace NBC.ActionEditor
 
         #region 播放相关
 
-        private static float _currentTime = 2;
+        public static CallbackFunction OnPlay;
+        public static CallbackFunction OnStop;
 
-        public static bool IsPlay;
+        private static AssetPlayer _player => AssetPlayer.Inst;
 
-        public static bool IsStop;
+        public static bool IsPlay { get; private set; }
+        public static bool IsPause { get; private set; }
 
-        public static bool IsRange;
+        public static bool IsRange { get; set; }
 
-        public static float Length
+        private static float _editorPreviousTime;
+
+        public static void Play(Action callback = null)
         {
-            get
+            if (Application.isPlaying)
             {
-                if (AssetData != null) return AssetData.Length;
-
-                return 0;
+                return;
             }
+
+            OnPlay?.Invoke();
+            IsPlay = true;
         }
 
-        /// <summary>
-        /// 当前时间
-        /// </summary>
-        public static float CurrentTime
+        public static void Pause(bool pause = true)
         {
-            get => _currentTime;
-            set => _currentTime = Mathf.Clamp(value, 0, Length);
+            IsPause = pause;
+        }
+
+        public static void Stop()
+        {
+            if (AssetData != null)
+                _player.CurrentTime = 0;
+
+            OnStop?.Invoke();
+            IsPlay = false;
+            IsPause = false;
+        }
+
+        public static void StepForward()
+        {
+            if (Math.Abs(_player.CurrentTime - _player.Length) < 0.00001f)
+            {
+                _player.CurrentTime = 0;
+                return;
+            }
+
+            _player.CurrentTime += Prefs.SnapInterval;
+        }
+
+        public static void StepBackward()
+        {
+            if (_player.CurrentTime == 0)
+            {
+                _player.CurrentTime = _player.Length;
+                return;
+            }
+
+            _player.CurrentTime -= Prefs.SnapInterval;
         }
 
 
-        // private static AssetPlayer _player => AssetPlayer.Inst;
-        //
-        // public static bool IsStop =>
-        //     Application.isPlaying
-        //         ? _player.IsPaused || !_player.IsActive
-        //         : EditorPlaybackState == EditorPlaybackState.Stoped;
-        //
-        // internal static EditorPlaybackState EditorPlaybackState = EditorPlaybackState.Stoped;
-        //
-        // public static WrapMode EditorPlaybackWrapMode = WrapMode.Loop;
-        //
-        // public static bool IsPlay => _player.CurrentTime > 0;
-        //
-        // public static void Play(Action callback = null)
-        // {
-        //     Play(EditorPlaybackState.PlayingForwards, callback);
-        // }
-        //
-        // private static void Play(EditorPlaybackState playbackState, Action callback = null)
-        // {
-        //     if (Application.isPlaying)
-        //     {
-        //         return;
-        //     }
-        //
-        //     EditorPlaybackState = playbackState;
-        //     OnPlay?.Invoke();
-        // }
-        //
-        // public static void Pause()
-        // {
-        //     EditorPlaybackState = EditorPlaybackState.Stoped;
-        //     OnStop?.Invoke();
-        // }
-        //
-        // public static void Stop(bool forceRewind)
-        // {
-        //     if (AssetData != null)
-        //         _player.CurrentTime = 0;
-        //     EditorPlaybackState = EditorPlaybackState.Stoped;
-        //     // WillRepaint = true;
-        //
-        //     OnStop?.Invoke();
-        // }
-        //
-        // public static void StepForward()
-        // {
-        //     if (Math.Abs(_player.CurrentTime - _player.Length) < 0.00001f)
-        //     {
-        //         _player.CurrentTime = 0;
-        //         return;
-        //     }
-        //
-        //     _player.CurrentTime += Prefs.snapInterval;
-        // }
-        //
-        // public static void StepBackward()
-        // {
-        //     if (_player.CurrentTime == 0)
-        //     {
-        //         _player.CurrentTime = _player.Length;
-        //         return;
-        //     }
-        //
-        //     _player.CurrentTime -= Prefs.snapInterval;
-        // }
+        private static void PlayerUpdate()
+        {
+            if (_player == null) return;
+            var delta = (Time.realtimeSinceStartup - _editorPreviousTime) * Time.timeScale;
+
+            _editorPreviousTime = Time.realtimeSinceStartup;
+
+            _player.Sample();
+
+            if (!IsPlay) return;
+            
+            if(IsPause) return;
+
+            if (_player.CurrentTime >= App.AssetData.Length)
+            {
+                _player.Sample(0);
+                _player.Sample(delta);
+                return;
+            }
+
+            _player.CurrentTime += delta; 
+            Repaint();
+        }
 
         #endregion
     }

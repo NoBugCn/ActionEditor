@@ -12,10 +12,11 @@ namespace NBC.ActionEditor
 
         void ShowTimeSlider()
         {
+            var asset = App.AssetData;
+            if(asset == null) return;
             var left = Styles.TimelineLeftWidth + Styles.RightGapWidth;
             var rect = new Rect(Position.x + left, Position.y, Position.width - left, Position.height);
             GUILayout.BeginArea(rect);
-            var asset = App.AssetData;
             var _timeMin = asset.ViewTimeMin;
             var _timeMax = asset.ViewTimeMax;
             

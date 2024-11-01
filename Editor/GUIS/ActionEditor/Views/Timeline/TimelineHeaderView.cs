@@ -41,26 +41,48 @@ namespace NBC.ActionEditor
                 // return;
             }
 
-            DrawButton(Styles.FirstFrameIcon, Lan.FirstFrame);
-            DrawButton(Styles.PrevFrameIcon, Lan.StepBackwardTips);
+            if (DrawButton(Styles.FirstFrameIcon, Lan.FirstFrame))
+            {
+                AssetPlayer.Inst.CurrentTime = 0;
+            }
+
+            if (DrawButton(Styles.PrevFrameIcon, Lan.StepBackwardTips))
+            {
+                App.StepBackward();
+            }
 
             EditorGUI.BeginChangeCheck();
-            var isPlaying = DrawToggle(App.IsPlay, Styles.PlayIcon, App.IsPlay ? Lan.StopTips : Lan.PlayTips);
+
+            var isPlaying = DrawToggle(App.IsPlay, App.IsPlay ? Styles.StopIcon : Styles.PlayIcon,
+                App.IsPlay ? Lan.StopTips : Lan.PlayTips);
             if (EditorGUI.EndChangeCheck())
             {
-                App.IsPlay = isPlaying;
                 if (isPlaying)
                 {
-                    // App.Play();
+                    App.Play();
                 }
                 else
                 {
-                    // App.Stop(true);
+                    App.Stop();
                 }
             }
 
-            DrawButton(Styles.NextFrameIcon, Lan.StepBackwardTips);
-            DrawButton(Styles.LastFrameIcon, Lan.StepBackwardTips);
+            var isPause = DrawToggle(App.IsPause, Styles.PauseIcon, Lan.PauseTips);
+            if (EditorGUI.EndChangeCheck())
+            {
+                App.Pause(isPause);
+            }
+
+            if (DrawButton(Styles.NextFrameIcon, Lan.StepForwardTips))
+            {
+                App.StepForward();
+            }
+
+            if (DrawButton(Styles.LastFrameIcon, Lan.PlayForwardTips))
+            {
+                AssetPlayer.Inst.CurrentTime = AssetPlayer.Inst.Length;
+            }
+
             App.IsRange = DrawToggle(App.IsRange, Styles.RangeIcon, Lan.StepBackwardTips);
 
             GUILayout.EndHorizontal();

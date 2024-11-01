@@ -16,7 +16,7 @@ namespace NBC.ActionEditor
     public class TimelinePointerView : ViewBase, IPointerClickHandler,
         IPointerDragHandler, IDragBeginHandler, IDragEndHandler
     {
-        public DirectorAsset asset => App.AssetData;
+        public Asset asset => App.AssetData;
 
         private Rect _playPointerHandler;
         private Rect _pointerTextRect;
@@ -111,12 +111,16 @@ namespace NBC.ActionEditor
             GUI.DrawTexture(new Rect(x, Position.y, 1, Position.height), Styles.WhiteTexture);
             GUI.color = Color.white;
 
-            var playX = asset.TimeToPos(App.CurrentTime, width);
-            _playPointerHandler = new Rect(playX - 5, Position.y, 11, height);
-            _pointerTextRect = new Rect(Position.x, Position.y, width, height);
+            if (App.IsPlay)
+            {
+                var playX = asset.TimeToPos(AssetPlayer.Inst.CurrentTime, width);
+                _playPointerHandler = new Rect(playX - 5, Position.y, 11, height);
+                _pointerTextRect = new Rect(Position.x, Position.y, width, height);
 
-            GUI.DrawTexture(_playPointerHandler, Styles.TimelineTimeCursorIcon);
-            GUI.DrawTexture(new Rect(playX, Position.y, 1, Position.height), Styles.WhiteTexture);
+                GUI.DrawTexture(_playPointerHandler, Styles.TimelineTimeCursorIcon);
+                GUI.DrawTexture(new Rect(playX, Position.y, 1, Position.height), Styles.WhiteTexture);
+            }
+            
 
             DrawRangeLine();
             DrawDragLine();
@@ -251,11 +255,11 @@ namespace NBC.ActionEditor
         private void ChangeCurrentTime(Vector2 mousePosition)
         {
             var time = asset.PosToTime(mousePosition.x, App.Width);
-            App.CurrentTime = asset.SnapTime(time);
-            App.CurrentTime =
-                Mathf.Clamp(App.CurrentTime, 0 + float.Epsilon, asset.Length - float.Epsilon);
-
-            Debug.Log($"time={time}");
+            AssetPlayer.Inst.CurrentTime = asset.SnapTime(time);
+            AssetPlayer.Inst.CurrentTime =
+                Mathf.Clamp(AssetPlayer.Inst.CurrentTime, 0 + float.Epsilon, asset.Length - float.Epsilon);
+            App.Play();
+            App.Pause();
             Window.Repaint();
         }
 

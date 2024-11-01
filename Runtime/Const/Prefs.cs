@@ -184,7 +184,7 @@ namespace NBC.ActionEditor
         {
             AssetTypes.Clear();
             AssetNames.Clear();
-            var types = ReflectionTools.GetImplementationsOf(typeof(DirectorAsset));
+            var types = ReflectionTools.GetImplementationsOf(typeof(Asset));
             foreach (var t in types)
             {
                 var typeName = t.GetCustomAttributes(typeof(NameAttribute), false).FirstOrDefault() is NameAttribute nameAtt ? nameAtt.name : t.Name.SplitCamelCase();

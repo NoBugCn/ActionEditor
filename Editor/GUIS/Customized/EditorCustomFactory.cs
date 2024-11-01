@@ -11,7 +11,7 @@ namespace NBC.ActionEditor
         private static bool _initHeadersDic = false;
         private static readonly Dictionary<Type, Type> _headerDic = new Dictionary<Type, Type>();
 
-        public static HeaderBase GetHeader(DirectorAsset asset)
+        public static HeaderBase GetHeader(Asset asset)
         {
             InitHeaderDic();
 

@@ -12,7 +12,7 @@ namespace NBC.ActionEditor
         private TimelinePointerView _pointerView;
         private TimelineBottomView _bottomView;
 
-        public DirectorAsset asset => App.AssetData;
+        public Asset asset => App.AssetData;
 
         private Rect _pointerRect;
 

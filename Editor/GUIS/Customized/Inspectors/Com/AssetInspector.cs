@@ -1,6 +1,4 @@
-﻿using NBC.ActionEditor;
-using UnityEditor;
-using UnityEditor.VersionControl;
+﻿using UnityEditor;
 
 namespace NBC.ActionEditor
 {
@@ -17,7 +15,7 @@ namespace NBC.ActionEditor
 
         protected void ShowCommonInspector(bool showBaseInspector = true)
         {
-            // action.version = EditorGUILayout.TextField("Name", action.version);
+            EditorGUILayout.TextField("Name", action.Length.ToString());
         }
     }
 }

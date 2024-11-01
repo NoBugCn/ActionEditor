@@ -21,6 +21,8 @@ namespace NBC.ActionEditor
         public static Texture2D PlayIcon;
         public static Texture2D PrevFrameIcon;
         public static Texture2D RangeIcon;
+        public static Texture2D PauseIcon;
+        public static Texture2D StopIcon;
 
         public static Texture2D EyeIcon;
         public static Texture2D LockIcon;
@@ -114,6 +116,8 @@ namespace NBC.ActionEditor
             PlayIcon = (Texture2D)Resources.Load("nbc/play/Play");
             PrevFrameIcon = (Texture2D)Resources.Load("nbc/play/PrevFrame");
             RangeIcon = (Texture2D)Resources.Load("nbc/play/Range");
+            PauseIcon = (Texture2D)Resources.Load("nbc/play/pause");
+            StopIcon = (Texture2D)Resources.Load("nbc/play/stop");
 
             EyeIcon = (Texture2D)Resources.Load("nbc/icon/Eye");
             LockIcon = (Texture2D)Resources.Load("nbc/icon/Lock");

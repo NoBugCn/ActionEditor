@@ -522,8 +522,8 @@ namespace NBC.ActionEditor
             var result = new List<float>
             {
                 0,
-                App.Length,
-                App.CurrentTime
+                AssetPlayer.Inst.Length,
+                AssetPlayer.Inst.CurrentTime
             };
 
             if (selectItems.Length > 0)

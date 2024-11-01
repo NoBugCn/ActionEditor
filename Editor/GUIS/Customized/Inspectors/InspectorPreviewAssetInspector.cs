@@ -11,7 +11,7 @@ namespace NBC.ActionEditor
     {
         private bool _optionsAssetFold = true;
 
-        private static DirectorAsset _lastAsset;
+        private static Asset _lastAsset;
         private static bool _willResample;
 
         private static Dictionary<IData, InspectorsBase> directableEditors =

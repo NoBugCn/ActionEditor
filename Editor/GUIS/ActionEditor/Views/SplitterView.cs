@@ -39,7 +39,6 @@ namespace NBC.ActionEditor
             if (Event.current.type == EventType.MouseDown && splitterRect.Contains(Event.current.mousePosition))
             {
                 isResizing = true;
-                Debug.LogError("fkkk");
                 Event.current.Use();
             }
 

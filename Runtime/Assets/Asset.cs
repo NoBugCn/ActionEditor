@@ -7,7 +7,7 @@ using UnityEngine;
 namespace NBC.ActionEditor
 {
     [Serializable]
-    public abstract class DirectorAsset : IDirector
+    public abstract class Asset : IDirector
     {
         [HideInInspector] public List<Group> groups = new();
         [SerializeField] private float length = 5f;
@@ -17,7 +17,7 @@ namespace NBC.ActionEditor
         [SerializeField] private float rangeMin;
         [SerializeField] private float rangeMax = 5f;
 
-        public DirectorAsset()
+        public Asset()
         {
             Init();
         }

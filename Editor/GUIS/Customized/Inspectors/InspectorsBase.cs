@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using UnityEditor;
 using UnityEngine;
@@ -11,7 +12,7 @@ namespace NBC.ActionEditor
     public class InspectorsBase
     {
         protected object target;
-        
+
         private Dictionary<int, bool> _unfoldDictionary = new Dictionary<int, bool>();
 
         public void SetTarget(object t)
@@ -29,7 +30,7 @@ namespace NBC.ActionEditor
         {
             DrawDefaultInspector(target);
         }
-        
+
         public void DrawDefaultInspector(object obj)
         {
             var t = obj.GetType();
@@ -51,7 +52,7 @@ namespace NBC.ActionEditor
                         need = false;
                         break;
                     }
-                    
+
                     if (attribute is OptionRelateParamAttribute option)
                     {
                         var relate = Array.Find(fieldInfos, f1 => f1.Name == option.argsName);
@@ -171,30 +172,81 @@ namespace NBC.ActionEditor
 
                 SetFoldout(value, foldout);
             }
-            // // 处理数组类型
-            // else if (fieldType.IsArray)
-            // {
-            //     Type elementType = fieldType.GetElementType();
-            //     Array array = (Array)value;
-            //
-            //     EditorGUILayout.LabelField(field.Name);
-            //     int newSize = EditorGUILayout.IntField("Size", array.Length);
-            //     if (newSize != array.Length)
-            //     {
-            //         Array newArray = Array.CreateInstance(elementType, newSize);
-            //         Array.Copy(array, newArray, Mathf.Min(array.Length, newSize));
-            //         array = newArray;
-            //     }
-            //
-            //     for (int i = 0; i < array.Length; i++)
-            //     {
-            //         object arrayItem = array.GetValue(i);
-            //         EditorGUILayout.LabelField($"Element {i}");
-            //         array.SetValue(DrawElementInspector(elementType, arrayItem), i);
-            //     }
-            //
-            //     newValue = array;
-            // }
+            // 处理数组类型
+            else if (fieldType.IsArray)
+            {
+                Type elementType = fieldType.GetElementType();
+
+                Array array = (Array)value;
+                if (array == null)
+                {
+                    array = Array.CreateInstance(elementType, 0);
+                    field.SetValue(obj, array);
+                }
+
+                var foldout = EditorGUILayout.Foldout(GetFoldout(value), field.GetShowName());
+                if (foldout)
+                {
+                    GUILayout.Space(6);
+                    GUILayout.BeginVertical(GUI.skin.box);
+                    for (int i = 0; i < array.Length; i++)
+                    {
+                        object listItem = array.GetValue(i);
+                        EditorGUILayout.BeginHorizontal();
+                        EditorGUILayout.LabelField($"Element {i}");
+                        if (GUILayout.Button("x", GUILayout.Width(20)))
+                        {
+                            Array newArray = Array.CreateInstance(elementType, array.Length - 1);
+                            for (int j = 0, k = 0; j < array.Length; j++)
+                            {
+                                if (j != i) // 跳过被移除的元素
+                                {
+                                    newArray.SetValue(array.GetValue(j), k);
+                                    k++;
+                                }
+                            }
+
+                            RemoveFoldout(value);
+                            array = newArray;
+                            field.SetValue(obj, newArray);
+                            SetFoldout(newArray, true);
+                            break; // 退出循环以避免数组长度更改引起的冲突
+                        }
+
+                        EditorGUILayout.EndHorizontal();
+                        EditorGUILayout.BeginHorizontal();
+                        GUILayout.Space(12);
+                        EditorGUILayout.BeginVertical();
+                        DrawDefaultInspector(listItem);
+                        EditorGUILayout.EndVertical();
+                        EditorGUILayout.EndHorizontal();
+                        DrawDivider();
+                    }
+
+                    GUILayout.Space(6);
+                    EditorGUILayout.BeginHorizontal();
+                    GUILayout.FlexibleSpace();
+                    if (GUILayout.Button("+", GUILayout.Width(30)))
+                    {
+                        Array newArray = Array.CreateInstance(elementType, array != null ? array.Length + 1 : 1);
+                        if (array != null)
+                        {
+                            array.CopyTo(newArray, 0);
+                        }
+
+                        newArray.SetValue(Activator.CreateInstance(elementType), newArray.Length - 1);
+                        RemoveFoldout(value);
+                        array = newArray;
+                        field.SetValue(obj, array);
+                        SetFoldout(newArray, true);
+                    }
+
+                    EditorGUILayout.EndHorizontal();
+                    GUILayout.EndVertical();
+                }
+
+                SetFoldout(value, foldout);
+            }
             else if (showType == typeof(int))
             {
                 newValue = EditorGUILayout.IntField(name, (int)value);
@@ -351,9 +403,10 @@ namespace NBC.ActionEditor
 
             return i1 - i2;
         }
-        
+
         private bool GetFoldout(object obj)
         {
+            if (obj == null) return false;
             if (!_unfoldDictionary.TryGetValue(obj.GetHashCode(), out var value))
             {
                 _unfoldDictionary[obj.GetHashCode()] = false;
@@ -364,9 +417,16 @@ namespace NBC.ActionEditor
 
         private void SetFoldout(object obj, bool unfold)
         {
+            if (obj == null) return;
             _unfoldDictionary[obj.GetHashCode()] = unfold;
         }
-        
+
+        public void RemoveFoldout(object obj)
+        {
+            if (obj == null) return;
+            _unfoldDictionary.Remove(obj.GetHashCode());
+        }
+
         private void DrawDivider()
         {
             GUILayout.Space(2);
