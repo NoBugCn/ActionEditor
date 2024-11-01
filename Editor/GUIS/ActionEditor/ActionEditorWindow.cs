@@ -50,6 +50,10 @@ namespace NBC.ActionEditor
 
             EditorApplication.update -= OnEditorUpdate;
             EditorApplication.update += OnEditorUpdate;
+            
+            titleContent = new GUIContent(Lan.Title);
+            minSize = new Vector2(500, 250);
+            
             InitializeAll();
         }
 

@@ -32,3 +32,12 @@ https://github.com/NoBugCn/ActionEditorExample
 
 # 交流Q群
 567604178
+
+# 更新日志
+## 2.0.0
+ - 新增List和数组支持
+ - 新增自定义类支持
+ - 重写新的UI样式
+ - 支持Asset自定义绑定Header
+ - 新增自定义Group的支持
+ - 新增Asset和Group自定义属性支持
