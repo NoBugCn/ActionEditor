@@ -37,7 +37,7 @@ Clone源码到项目中或通过package安装编辑器后，即可开始使用�
 https://github.com/NoBugCn/ActionEditorExample
 
 # 文档
-操作手册文档：[点击查看](https://nobug.cn/book/414447506088261)
+操作手册文档：[点击查看](./docs/1.简介.md)
 
 # 交流Q群
 567604178
